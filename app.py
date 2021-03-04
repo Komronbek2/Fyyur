@@ -173,7 +173,7 @@ def delete_venue(venue_id):
 
         flash('Venue ' + venue_name + ' was deleted')
     except:
-        flash('an error occured and Venue ' + venue_name + ' was not deleted')
+        flash('An error occured and Venue ' + venue_name + ' was not deleted')
         db.session.rollback()
     finally:
         db.session.close()
@@ -400,7 +400,7 @@ def delete_artist(artist_id):
 
         flash('Artist ' + artist.name + ' was deleted')
     except:
-        flash('an error occured and Artist ' +
+        flash('An error occured and Artist ' +
               artist.name + ' was not deleted')
         db.session.rollback()
     finally:
