@@ -1,7 +1,10 @@
+import re
+from enums import Genre, State
 from datetime import datetime
-from flask_wtf import Form
+from flask_wtf import FlaskForm as Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField 
 from wtforms.validators import DataRequired, AnyOf, URL
+
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -16,6 +19,26 @@ class ShowForm(Form):
         default= datetime.today()
     )
 
+def is_valid_phone(self, number):
+    """ Validate phone numbers like:
+    1234567890 - no space
+    123.456.7890 - dot separator
+    123-456-7890 - dash separator
+    123 456 7890 - space separator
+
+    Patterns:
+    000 = [0-9]{3}
+    0000 = [0-9]{4}
+    -.  = ?[-. ]
+
+    Note: (? = optional) - Learn more: https://regex101.com/
+    """
+    
+    regex = re.compile('^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$')
+    return regex.match(number)
+    
+
+
 class VenueForm(Form):
     name = StringField(
         'name', validators=[DataRequired()]
@@ -23,9 +46,7 @@ class VenueForm(Form):
     city = StringField(
         'city', validators=[DataRequired()]
     )
-    state = SelectField(
-        'state', validators=[DataRequired()],
-        choices=[
+    state_choices=[
             ('AL', 'AL'),
             ('AK', 'AK'),
             ('AZ', 'AZ'),
@@ -78,19 +99,35 @@ class VenueForm(Form):
             ('WI', 'WI'),
             ('WY', 'WY'),
         ]
+    state = SelectField(
+        'state', validators=[DataRequired()],
+        choices=state_choices
     )
     address = StringField(
         'address', validators=[DataRequired()]
     )
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+        if not is_valid_phone(self.phone.data):
+            self.phone.errors.append('Invalid phone.')
+        if not set(self.genres.data).issubset(dict(Genre.choices()).keys()):
+            self.genres.errors.append('Invalid genres.')
+            return False
+        if self.state.data not in dict(State.choices()).keys():
+            self.state.errors.append('Invalid state.')
+            return False
+        # if pass validation
+        return True
+
     phone = StringField(
         'phone'
     )
     image_link = StringField(
         'image_link'
     )
-    genres = SelectMultipleField(
-        'genres', validators=[DataRequired()],
-        choices=[
+    genres_choices=[
             ('Alternative', 'Alternative'),
             ('Blues', 'Blues'),
             ('Classical', 'Classical'),
@@ -111,6 +148,9 @@ class VenueForm(Form):
             ('Soul', 'Soul'),
             ('Other', 'Other'),
         ]
+    genres = SelectMultipleField(
+        'genres', validators=[DataRequired()],
+        choices=genres_choices
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]
@@ -130,9 +170,7 @@ class ArtistForm(Form):
     city = StringField(
         'city', validators=[DataRequired()]
     )
-    state = SelectField(
-        'state', validators=[DataRequired()],
-        choices=[
+    state_choices=[
             ('AL', 'AL'),
             ('AK', 'AK'),
             ('AZ', 'AZ'),
@@ -185,16 +223,37 @@ class ArtistForm(Form):
             ('WI', 'WI'),
             ('WY', 'WY'),
         ]
+ 
+    state = SelectField(
+        'state', validators=[DataRequired()],
+        choices=state_choices
     )
+
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+        if not is_valid_phone(self.phone.data):
+            self.phone.errors.append('Invalid phone.')
+        if not set(self.genres.data).issubset(dict(Genre.choices()).keys()):
+            self.genres.errors.append('Invalid genres.')
+            return False
+        if self.state.data not in dict(State.choices()).keys():
+            self.state.errors.append('Invalid state.')
+            return False
+        # if pass validation
+        return True
+
     phone = StringField(
         'phone'
     )
+
+
+
     image_link = StringField(
         'image_link'
     )
-    genres = SelectMultipleField(
-        'genres', validators=[DataRequired()],
-        choices=[
+    genres_choices=[
             ('Alternative', 'Alternative'),
             ('Blues', 'Blues'),
             ('Classical', 'Classical'),
@@ -215,6 +274,9 @@ class ArtistForm(Form):
             ('Soul', 'Soul'),
             ('Other', 'Other'),
         ]
+    genres = SelectMultipleField(
+        'genres', validators=[DataRequired()],
+        choices=genres_choices
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]

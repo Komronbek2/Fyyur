@@ -1,21 +1,15 @@
 from flask import Flask
-from flask_migrate import Migrate
-from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 
-app = Flask(__name__)
-moment = Moment(app)
-app.config.from_object('config')
-db = SQLAlchemy(app)
-migrate = Migrate(app,db)
+db = SQLAlchemy()
 
 # Models.
 #
 
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+    __tablename__ = 'venue'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -29,14 +23,14 @@ class Venue(db.Model):
     website = db.Column(db.String(250))
     seeking_talent = db.Column(db.Boolean, default=True)
     seeking_description = db.Column(db.String(250))
-    shows = db.relationship('Show', backref='venue', lazy=True)
+    shows = db.relationship('show', backref=db.backref('venue'), lazy='joined')
 
     def __repr__(self):
       return f'<Venue {self.id} name: {self.name}>'
 
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+    __tablename__ = 'artist'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -46,19 +40,50 @@ class Artist(db.Model):
     genres = db.Column("genres", db.ARRAY(db.String()), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    shows = db.relationship('Show', backref='artist', lazy=True)
+    shows = db.relationship('show', backref=db.backref('artist'), lazy='joined')
 
     def __repr__(self):
       return f'<Artist {self.id} name: {self.name}>'
 
 
 class Show(db.Model):
-    __tablename__ = 'Show'
+    __tablename__ = 'show'
 
-    id = db.Column(db.Integer, primary_key=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
-    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    id = db.Column(
+      db.Integer,
+      primary_key=True
+    )
+
+    artist_id = db.Column(
+      db.Integer,
+      db.ForeignKey('artist.id'),
+      nullable=False
+    )
+
+    venue_id = db.Column(
+      db.Integer,
+      db.ForeignKey('venue.id'),
+      nullable=False
+    )
+
+    start_time = db.Column(
+      db.DateTime,
+      nullable=False,
+      default=datetime.utcnow
+    )
+
+
+    artist = db.relationship(
+        'Artist', 
+        backref=db.backref('shows_artist', cascade='all, delete'), 
+        lazy='joined'
+    )
+
+    venue = db.relationship(
+        'Venue', 
+        backref=db.backref('shows_venue', cascade='all, delete'), 
+        lazy='joined'
+    )
 
     def __repr__(self):
       return f'<Show {self.id}, Artist {self.artist_id}, Venue {self.venue_id}>'
